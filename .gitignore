@@ -1,0 +1,51 @@
+# Python関連
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# 仮想環境
+venv/
+ENV/
+env/
+
+# モデル関連
+instructblip_finetuned_no_image_token/
+*.pt
+*.pth
+*.bin
+
+# キャッシュとログ
+.cache/
+.ipynb_checkpoints
+*.log
+
+# Mac関連
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Streamlit関連
+.streamlit/
+
+# その他
+.idea/
+.vscode/
+*.swp
+*.swo 
