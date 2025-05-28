@@ -49,3 +49,4 @@ instructblip_finetuned_no_image_token/
 .vscode/
 *.swp
 *.swo 
+.env
