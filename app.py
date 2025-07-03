@@ -6,11 +6,9 @@ from dotenv import load_dotenv, find_dotenv
 load_dotenv(find_dotenv())
 
 import os
-import torch
 from PIL import Image
 import streamlit as st
 from openai import OpenAI
-from transformers import InstructBlipProcessor, InstructBlipForConditionalGeneration
 
 # ────────────────────────────────────────────
 # 環境変数の取得
@@ -53,18 +51,47 @@ def get_class_index_from_generated(text: str) -> int:
             return i
     return -1
 
+import os
+import streamlit as st
+
+@st.cache(allow_output_mutation=True)
+def load_model_and_processor():
+    # ▶︎ ここで heavy ライブラリを読み込む
+    import torch
+    from transformers import InstructBlipProcessor, InstructBlipForConditionalGeneration
+
+    LOCAL_DIR = os.getenv("FINETUNED_MODEL_DIR", "./instructblip_finetuned_no_image_token")
+    if os.path.isdir(LOCAL_DIR):
+        st.sidebar.info(f"🔄 ファインチューン済みモデル読み込み: {LOCAL_DIR}")
+        model     = InstructBlipForConditionalGeneration.from_pretrained(LOCAL_DIR)
+        processor = InstructBlipProcessor.from_pretrained(
+            "Salesforce/instructblip-flan-t5-xl", use_fast=False)
+    else:
+        st.sidebar.warning(f"⚠️ モデル未検出: {LOCAL_DIR} → デフォルトロード")
+        processor = InstructBlipProcessor.from_pretrained(
+            "Salesforce/instructblip-flan-t5-xl", use_fast=False)
+        model     = InstructBlipForConditionalGeneration.from_pretrained(
+            "Salesforce/instructblip-flan-t5-xl")
+
+    # ▶︎ デバイス決定
+    if torch.cuda.is_available():
+        device = torch.device("cuda")
+    elif torch.backends.mps.is_available():
+        device = torch.device("mps")
+    else:
+        device = torch.device("cpu")
+
+    # ▶︎ 前処理サイズ調整
+    processor.image_processor.size      = {"height":224, "width":224}
+    processor.image_processor.crop_size = {"height":224, "width":224}
+
+    model.to(device)
+    model.eval()
+    return model, processor, device
 
 def load_local_model():
-    """ファインチューンモデル優先ロード、なければデフォルト"""
-    LOCAL_DIR = MODEL_DIR
-    if os.path.isdir(LOCAL_DIR):
-        st.info(f"🔄 ファインチューン済みモデル読み込み: {LOCAL_DIR}")
-        model     = InstructBlipForConditionalGeneration.from_pretrained(LOCAL_DIR)
-        processor = InstructBlipProcessor.from_pretrained("Salesforce/instructblip-flan-t5-xl", use_fast=False)
-    else:
-        st.warning(f"⚠️ モデルフォルダ未発見: {LOCAL_DIR} -> デフォルトロード")
-        processor = InstructBlipProcessor.from_pretrained("Salesforce/instructblip-flan-t5-xl", use_fast=False)
-        model     = InstructBlipForConditionalGeneration.from_pretrained("Salesforce/instructblip-flan-t5-xl")
+    return load_model_and_processor()
+
 
     # デバイス選択
     if torch.cuda.is_available():
